@@ -25,7 +25,7 @@ class BirdRun(object):
         self.files_path = data_path
 
     def get_bird_run(self, nickname, bird_name, run_name=None, do_gradient=False, do_validation=False,
-                     hop_distance=4, num_spreads=5, num_simulations=2, transmission_exponent=1):
+                     hop_distance=4, num_spreads=5, num_simulations=2, transmission_exponent=1, state="CA"):
         """Given a bird name in 6-letter ebird format, returns the BirdRun object for the bird."""
         d = {"bird": nickname,
              "run_name": run_name or "Standard",
@@ -38,7 +38,9 @@ class BirdRun(object):
             nickname = nickname,
             name = bird_name,
             # Input ,
-            terrain_fn = os.path.join(self.files_path, "Terrain/iucn_habclass_lvl2_us_300_near_cropped.tif"),
+            terrain_fn = (os.path.join(self.files_path, "Terrain/iucn_habclass_lvl2_us_300_near_cropped.tif")
+                          if state == "CA" else
+                          os.path.join(self.files_path, "Terrain/north_carolina_terrain.tif")),
             habitat_fn = os.path.join(self.files_path, "{bird}/habitat.tif".format(**d)),
             transmission_fn = os.path.join(self.files_path, "{bird}/transmission_refined_{transmission_exponent}.csv".format(**d)),
             resistance_original_fn = os.path.join(self.files_path, "{bird}/resistance.csv".format(**d)),
