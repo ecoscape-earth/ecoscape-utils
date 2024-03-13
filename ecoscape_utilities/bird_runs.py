@@ -4,6 +4,7 @@ from collections import namedtuple
 BirdRunDef = namedtuple('BirdRun', [
     'nickname', # 6-letter ebird name.
     'name', # official name.
+    'state', # State for the analysis. 
     'terrain_fn', # File for the terrain
     'habitat_fn', # File for the habitat.
     'transmission_fn', # Terrain transmission.
