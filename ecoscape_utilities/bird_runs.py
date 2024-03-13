@@ -40,9 +40,7 @@ class BirdRun(object):
             name = bird_name,
             state = state,
             # Input ,
-            terrain_fn = (os.path.join(self.files_path, "Terrain/iucn_habclass_lvl2_us_300_near_cropped.tif")
-                          if state == "US-CA" else
-                          os.path.join(self.files_path, "Terrain/north_carolina_terrain.tif")),
+            terrain_fn = os.path.join(self.files_path, "{bird}/terrain.tif".format(**d)),
             habitat_fn = os.path.join(self.files_path, "{bird}/habitat.tif".format(**d)),
             transmission_fn = os.path.join(self.files_path, "{bird}/transmission_refined_{transmission_exponent}.csv".format(**d)),
             resistance_original_fn = os.path.join(self.files_path, "{bird}/resistance.csv".format(**d)),
