@@ -25,7 +25,7 @@ class BirdRun(object):
         self.files_path = data_path
 
     def get_bird_run(self, nickname, bird_name, run_name=None, do_gradient=False, do_validation=False,
-                     hop_distance=4, num_spreads=5, num_simulations=2, transmission_exponent=1, state="CA"):
+                     hop_distance=4, num_spreads=5, num_simulations=2, transmission_exponent=1, state="US-CA"):
         """Given a bird name in 6-letter ebird format, returns the BirdRun object for the bird."""
         d = {"bird": nickname,
              "run_name": run_name or "Standard",
@@ -37,9 +37,10 @@ class BirdRun(object):
         return BirdRunDef(
             nickname = nickname,
             name = bird_name,
+            state = state,
             # Input ,
             terrain_fn = (os.path.join(self.files_path, "Terrain/iucn_habclass_lvl2_us_300_near_cropped.tif")
-                          if state == "CA" else
+                          if state == "US-CA" else
                           os.path.join(self.files_path, "Terrain/north_carolina_terrain.tif")),
             habitat_fn = os.path.join(self.files_path, "{bird}/habitat.tif".format(**d)),
             transmission_fn = os.path.join(self.files_path, "{bird}/transmission_refined_{transmission_exponent}.csv".format(**d)),
@@ -68,7 +69,7 @@ class BirdRun(object):
         """
         d = dict(**kwargs)
         d["isbig"] = "_big" if bigsquare else ""
-        return os.path.join(obs_path, "CA_min_{min_checklists}_len_{max_distance}{isbig}.json".format(**d))
+        return os.path.join(obs_path, "OBS_min_{min_checklists}_len_{max_distance}{isbig}.json".format(**d))
 
     def get_observations_display_fn(self, obs_path, bigsquare=False, **kwargs):
         """Completes the name of an observation ratio tif file, adding the information on minimum number of observations,
@@ -76,21 +77,21 @@ class BirdRun(object):
         """
         d = dict(**kwargs)
         d["isbig"] = "_big" if bigsquare else ""
-        return os.path.join(obs_path, "CA_min_{min_checklists}_len_{max_distance}{isbig}.tif".format(**d))
+        return os.path.join(obs_path, "OBS_min_{min_checklists}_len_{max_distance}{isbig}.tif".format(**d))
 
     def get_observations_all_fn(self, obs_path, **kwargs):
         """Completes the name of an observation ratio file, adding the information on minimum number of observations,
         and maximum length walked.
         """
         d = dict(**kwargs)
-        return os.path.join(obs_path, "CA_all_len_{max_distance}_{date_range}_{num_squares}.csv".format(**d))
+        return os.path.join(obs_path, "OBS_all_len_{max_distance}_{date_range}_{num_squares}.csv".format(**d))
 
     def get_observations_all_display_fn(self, obs_path, **kwargs):
         """Completes the name of an observation ratio tif file, adding the information on minimum number of observations,
         and maximum length walked.
         """
         d = dict(**kwargs)
-        return os.path.join(obs_path, "CA_all_len_{max_distance}_{date_range}_{num_squares}.tif".format(**d))
+        return os.path.join(obs_path, "OBS_all_len_{max_distance}_{date_range}_{num_squares}.tif".format(**d))
 
     def createdir_for_file(self, fn):
         """Ensures that the path to a file exists."""
