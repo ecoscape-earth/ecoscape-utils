@@ -33,6 +33,7 @@ class BirdRun(object):
              "num_spreads": num_spreads,
              "hop_distance": hop_distance,
              "num_simulations": num_simulations,
+             "state": state,
              "transmission_exponent": transmission_exponent}
         self.createdir(os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}".format(**d)))
         return BirdRunDef(
