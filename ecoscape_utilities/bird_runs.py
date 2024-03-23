@@ -4,7 +4,6 @@ from collections import namedtuple
 BirdRunDef = namedtuple('BirdRun', [
     'nickname', # 6-letter ebird name.
     'name', # official name.
-    'state', # State for the analysis. 
     'terrain_fn', # File for the terrain
     'habitat_fn', # File for the habitat.
     'transmission_fn', # Terrain transmission.
@@ -38,7 +37,6 @@ class BirdRun(object):
         return BirdRunDef(
             nickname = nickname,
             name = bird_name,
-            state = state,
             # Input ,
             terrain_fn = os.path.join(self.files_path, "{bird}/terrain.tif".format(**d)),
             habitat_fn = os.path.join(self.files_path, "{bird}/habitat.tif".format(**d)),
@@ -67,30 +65,34 @@ class BirdRun(object):
         and maximum length walked.
         """
         d = dict(**kwargs)
+        assert 'state' in d and 'max_distance' in d and 'date_range' in d and 'num_squares' in d
         d["isbig"] = "_big" if bigsquare else ""
-        return os.path.join(obs_path, "OBS_min_{min_checklists}_len_{max_distance}{isbig}.json".format(**d))
+        return os.path.join(obs_path, "OBS_min_{state}_{min_checklists}_len_{max_distance}{isbig}.json".format(**d))
 
     def get_observations_display_fn(self, obs_path, bigsquare=False, **kwargs):
         """Completes the name of an observation ratio tif file, adding the information on minimum number of observations,
         and maximum length walked.
         """
         d = dict(**kwargs)
+        assert 'state' in d and 'max_distance' in d and 'date_range' in d and 'num_squares' in d
         d["isbig"] = "_big" if bigsquare else ""
-        return os.path.join(obs_path, "OBS_min_{min_checklists}_len_{max_distance}{isbig}.tif".format(**d))
+        return os.path.join(obs_path, "OBS_min_{state}_{min_checklists}_len_{max_distance}{isbig}.tif".format(**d))
 
     def get_observations_all_fn(self, obs_path, **kwargs):
         """Completes the name of an observation ratio file, adding the information on minimum number of observations,
         and maximum length walked.
         """
         d = dict(**kwargs)
-        return os.path.join(obs_path, "OBS_all_len_{max_distance}_{date_range}_{num_squares}.csv".format(**d))
+        assert 'state' in d and 'max_distance' in d and 'date_range' in d and 'num_squares' in d
+        return os.path.join(obs_path, "OBS_all_len_{state}_{max_distance}_{date_range}_{num_squares}.csv".format(**d))
 
     def get_observations_all_display_fn(self, obs_path, **kwargs):
         """Completes the name of an observation ratio tif file, adding the information on minimum number of observations,
         and maximum length walked.
         """
         d = dict(**kwargs)
-        return os.path.join(obs_path, "OBS_all_len_{max_distance}_{date_range}_{num_squares}.tif".format(**d))
+        assert 'state' in d and 'max_distance' in d and 'date_range' in d and 'num_squares' in d
+        return os.path.join(obs_path, "OBS_all_len_{state}_{max_distance}_{date_range}_{num_squares}.tif".format(**d))
 
     def createdir_for_file(self, fn):
         """Ensures that the path to a file exists."""
