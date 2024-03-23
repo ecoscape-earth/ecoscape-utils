@@ -34,26 +34,26 @@ class BirdRun(object):
              "hop_distance": hop_distance,
              "num_simulations": num_simulations,
              "transmission_exponent": transmission_exponent}
-        self.createdir(os.path.join(self.files_path, "{bird}/Output/{run_name}".format(**d)))
+        self.createdir(os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}".format(**d)))
         return BirdRunDef(
             nickname = nickname,
             name = bird_name,
             state = state,
             # Input ,
-            terrain_fn = os.path.join(self.files_path, "{bird}/terrain.tif".format(**d)),
-            habitat_fn = os.path.join(self.files_path, "{bird}/habitat.tif".format(**d)),
-            transmission_fn = os.path.join(self.files_path, "{bird}/transmission_refined_{transmission_exponent}.csv".format(**d)),
-            resistance_original_fn = os.path.join(self.files_path, "{bird}/resistance.csv".format(**d)),
-            terrain_histogram_json_fn = os.path.join(self.files_path, "{bird}/terrain_hist.json".format(**d)),
-            terrain_histogram_csv_fn = os.path.join(self.files_path, "{bird}/terrain_hist.csv".format(**d)),
+            terrain_fn = os.path.join(self.files_path, "{bird}/{state}/terrain.tif".format(**d)),
+            habitat_fn = os.path.join(self.files_path, "{bird}/{state}/habitat.tif".format(**d)),
+            transmission_fn = os.path.join(self.files_path, "{bird}/{state}/transmission_refined_{transmission_exponent}.csv".format(**d)),
+            resistance_original_fn = os.path.join(self.files_path, "{bird}/{state}/resistance.csv".format(**d)),
+            terrain_histogram_json_fn = os.path.join(self.files_path, "{bird}/{state}/terrain_hist.json".format(**d)),
+            terrain_histogram_csv_fn = os.path.join(self.files_path, "{bird}/{state}/terrain_hist.csv".format(**d)),
             # Validation files.
-            validation_fn = os.path.join(self.files_path, "{bird}/Ratios".format(**d)),
+            validation_fn = os.path.join(self.files_path, "{bird}/{state}/Ratios".format(**d)),
             # Output files
-            repopulation_fn = os.path.join(self.files_path, "{bird}/Output/{run_name}/repopulation_spreads_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.tif".format(**d)),
-            gradient_fn = os.path.join(self.files_path, "{bird}/Output/{run_name}/gradient_spreads_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.tif".format(**d)),
-            log_fn = os.path.join(self.files_path, "{bird}/Output/{run_name}/log_spreads_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.json".format(**d)),
-            obs_path = os.path.join(self.files_path, "{bird}/Observations".format(**d)),
-            obs_csv_path = os.path.join(self.files_path, "{bird}/Output/{run_name}/obs_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.csv".format(**d)),
+            repopulation_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/repopulation_spreads_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.tif".format(**d)),
+            gradient_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/gradient_spreads_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.tif".format(**d)),
+            log_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/log_spreads_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.json".format(**d)),
+            obs_path = os.path.join(self.files_path, "{bird}/{state}/Observations".format(**d)),
+            obs_csv_path = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/obs_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.csv".format(**d)),
             # Run parameters
             do_gradient=do_gradient,
             do_validation = do_validation,
