@@ -15,8 +15,7 @@ BirdRunDef = namedtuple('BirdRun', [
     'validation_fn',
     'obs_path',
     'obs_csv_path',
-    'do_gradient', 'do_validation',
-    'hop_distance', 'num_spreads', 'num_simulations'])
+    ])
 
 
 class BirdRun(object):
@@ -30,11 +29,7 @@ class BirdRun(object):
         """Given a bird name in 6-letter ebird format, returns the BirdRun object for the bird."""
         d = {"bird": nickname,
              "run_name": run_name or "Standard",
-             "num_spreads": num_spreads,
-             "hop_distance": hop_distance,
-             "num_simulations": num_simulations,
-             "state": state,
-             "transmission_exponent": transmission_exponent}
+             "state": state}
         self.createdir(os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}".format(**d)))
         return BirdRunDef(
             nickname = nickname,
@@ -50,17 +45,11 @@ class BirdRun(object):
             # Validation files.
             validation_fn = os.path.join(self.files_path, "{bird}/{state}/Ratios".format(**d)),
             # Output files
-            repopulation_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/repopulation_spreads_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.tif".format(**d)),
-            gradient_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/gradient_spreads_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.tif".format(**d)),
-            log_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/log_spreads_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.json".format(**d)),
+            repopulation_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/repopulation.tif".format(**d)),
+            gradient_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/gradient.tif".format(**d)),
+            log_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/log.json".format(**d)),
             obs_path = os.path.join(self.files_path, "{bird}/{state}/Observations".format(**d)),
-            obs_csv_path = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/obs_{num_spreads}_hop_{hop_distance}_sims_{num_simulations}_texp_{transmission_exponent}.csv".format(**d)),
-            # Run parameters
-            do_gradient=do_gradient,
-            do_validation = do_validation,
-            hop_distance = hop_distance,
-            num_spreads = num_spreads,
-            num_simulations = num_simulations
+            obs_csv_path = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/observations.csv".format(**d)),
         )
 
     def get_observations_fn(self, obs_path, bigsquare=False, **kwargs):
