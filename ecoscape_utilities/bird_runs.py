@@ -24,8 +24,7 @@ class BirdRun(object):
         """Initializes a bird run, given a data path"""
         self.files_path = data_path
 
-    def get_bird_run(self, nickname, bird_name, run_name=None, do_gradient=False, do_validation=False,
-                     hop_distance=4, num_spreads=5, num_simulations=2, transmission_exponent=1, state="US-CA"):
+    def get_bird_run(self, nickname, bird_name, run_name=None, state="US-CA"):
         """Given a bird name in 6-letter ebird format, returns the BirdRun object for the bird."""
         d = {"bird": nickname,
              "run_name": run_name or "Standard",
@@ -38,7 +37,7 @@ class BirdRun(object):
             # Input ,
             terrain_fn = os.path.join(self.files_path, "{bird}/{state}/terrain.tif".format(**d)),
             habitat_fn = os.path.join(self.files_path, "{bird}/{state}/habitat.tif".format(**d)),
-            transmission_fn = os.path.join(self.files_path, "{bird}/{state}/transmission_refined_{transmission_exponent}.csv".format(**d)),
+            transmission_fn = os.path.join(self.files_path, "{bird}/{state}/transmission_refined_1.csv".format(**d)),
             resistance_original_fn = os.path.join(self.files_path, "{bird}/{state}/resistance.csv".format(**d)),
             terrain_histogram_json_fn = os.path.join(self.files_path, "{bird}/{state}/terrain_hist.json".format(**d)),
             terrain_histogram_csv_fn = os.path.join(self.files_path, "{bird}/{state}/terrain_hist.csv".format(**d)),
