@@ -38,7 +38,7 @@ class BirdRun(object):
             terrain_fn = os.path.join(self.files_path, "{bird}/{state}/terrain.tif".format(**d)),
             habitat_fn = os.path.join(self.files_path, "{bird}/{state}/habitat.tif".format(**d)),
             transmission_fn = os.path.join(self.files_path, "{bird}/{state}/transmission_refined_1.csv".format(**d)),
-            resistance_original_fn = os.path.join(self.files_path, "{bird}/{state}/resistance.csv".format(**d)),
+            resistance_original_fn = os.path.join(self.files_path, "{bird}/resistance.csv".format(**d)),
             terrain_histogram_json_fn = os.path.join(self.files_path, "{bird}/{state}/terrain_hist.json".format(**d)),
             terrain_histogram_csv_fn = os.path.join(self.files_path, "{bird}/{state}/terrain_hist.csv".format(**d)),
             # Validation files.
