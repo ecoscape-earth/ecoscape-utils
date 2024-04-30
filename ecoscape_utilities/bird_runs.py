@@ -19,6 +19,9 @@ BirdRunDef = namedtuple('BirdRun', [
     'obs_csv_path',
     ])
 
+def delete_run(self, base_path, nickname, state, run_name="Standard"):
+    """Deletes the files for the given run."""
+    shutil.rmtree(os.path.join(base_path, f"{nickname}/{state}/Output/{run_name}"), ignore_errors=True)
 
 class BirdRun(object):
 
@@ -26,10 +29,6 @@ class BirdRun(object):
         """Initializes a bird run, given a data path"""
         self.files_path = data_path
         
-    def delete_run(self, bird):
-        """Deletes the files for the given run."""
-        shutil.rmtree(os.path.join(self.files_path, f"{bird.nickname}/{bird.state}/Output/{bird.run_name}"), ignore_errors=True)
-
     def get_bird_run(self, nickname, bird_name, run_name=None, state="US-CA"):
         """Given a bird name in 6-letter ebird format, returns the BirdRun object for the bird."""
         d = {"bird": nickname,
