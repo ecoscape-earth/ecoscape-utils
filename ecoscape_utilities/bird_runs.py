@@ -6,6 +6,7 @@ BirdRunDef = namedtuple('BirdRun', [
     'nickname', # 6-letter ebird name.
     'name', # official name.
     'state', # State for the analysis. 
+    'run_name', # Name of the run.
     'terrain_fn', # File for the terrain
     'habitat_fn', # File for the habitat.
     'transmission_fn', # Terrain transmission.
@@ -39,6 +40,7 @@ class BirdRun(object):
             nickname = nickname,
             name = bird_name,
             state = state,
+            run_name = run_name or "Standard",
             # Input ,
             terrain_fn = os.path.join(self.files_path, "{bird}/{state}/terrain.tif".format(**d)),
             habitat_fn = os.path.join(self.files_path, "{bird}/{state}/habitat.tif".format(**d)),
