@@ -19,7 +19,7 @@ BirdRunDef = namedtuple('BirdRun', [
     'obs_csv_path',
     ])
 
-def delete_run(self, base_path, nickname, state, run_name="Standard"):
+def delete_run(base_path, nickname, state, run_name="Standard"):
     """Deletes the files for the given run."""
     p = os.path.join(base_path, f"{nickname}/{state}/Output/{run_name}")
     print("Deleting", p)
