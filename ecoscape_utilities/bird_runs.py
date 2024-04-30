@@ -21,7 +21,9 @@ BirdRunDef = namedtuple('BirdRun', [
 
 def delete_run(self, base_path, nickname, state, run_name="Standard"):
     """Deletes the files for the given run."""
-    shutil.rmtree(os.path.join(base_path, f"{nickname}/{state}/Output/{run_name}"), ignore_errors=True)
+    p = os.path.join(base_path, f"{nickname}/{state}/Output/{run_name}")
+    print("Deleting", p)
+    shutil.rmtree(p, ignore_errors=True)
 
 class BirdRun(object):
 
