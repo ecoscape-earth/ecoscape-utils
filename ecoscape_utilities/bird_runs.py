@@ -2,7 +2,7 @@ import os
 from collections import namedtuple
 import shutil
 
-BirdRunDef = namedtuple('BirdRun', [
+BirdRunInfo = namedtuple('BirdRunInfo', [
     'nickname', # 6-letter ebird name.
     'name', # official name.
     'state', # State for the analysis. 
@@ -39,7 +39,7 @@ class BirdRun(object):
              "state": state}
         self.createdir(os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}".format(**d)))
         obs_path = os.path.join(self.files_path, "{bird}/{state}/Observations".format(**d))
-        return BirdRunDef(
+        return BirdRunInfo(
             nickname = nickname,
             name = bird_name,
             state = state,
