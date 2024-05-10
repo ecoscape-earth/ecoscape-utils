@@ -17,6 +17,7 @@ BirdRunDef = namedtuple('BirdRun', [
     'validation_fn',
     'obs_path',
     'obs_csv_path',
+    'get_observations_all_fn',
     ])
 
 def delete_run(base_path, nickname, state, run_name="Standard"):
@@ -37,6 +38,7 @@ class BirdRun(object):
              "run_name": run_name or "Standard",
              "state": state}
         self.createdir(os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}".format(**d)))
+        obs_path = os.path.join(self.files_path, "{bird}/{state}/Observations".format(**d))
         return BirdRunDef(
             nickname = nickname,
             name = bird_name,
@@ -55,8 +57,9 @@ class BirdRun(object):
             repopulation_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/repopulation.tif".format(**d)),
             gradient_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/gradient.tif".format(**d)),
             log_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/log.json".format(**d)),
-            obs_path = os.path.join(self.files_path, "{bird}/{state}/Observations".format(**d)),
+            obs_path = obs_path,
             obs_csv_path = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/observations.csv".format(**d)),
+            get_observations_all_fn = os.path.join(obs_path, "OBS_all_len_{max_distance}_{date_range}_{num_squares}.csv"),
         )
 
     def get_observations_fn(self, obs_path, bigsquare=False, **kwargs):
