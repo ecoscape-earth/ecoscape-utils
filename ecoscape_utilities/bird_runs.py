@@ -37,7 +37,6 @@ class BirdRun(object):
              "run_name": run_name or "Standard",
              "state": state}
         self.createdir(os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}".format(**d)))
-        obs_path = os.path.join(self.files_path, "{bird}/{state}/Observations".format(**d))
         return BirdRunInfo(
             nickname = nickname,
             name = bird_name,
@@ -56,7 +55,7 @@ class BirdRun(object):
             repopulation_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/repopulation.tif".format(**d)),
             gradient_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/gradient.tif".format(**d)),
             log_fn = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/log.json".format(**d)),
-            obs_path = obs_path,
+            obs_path = os.path.join(self.files_path, "{bird}/{state}/Observations".format(**d)),
             obs_csv_path = os.path.join(self.files_path, "{bird}/{state}/Output/{run_name}/observations.csv".format(**d)),
         )
 
