@@ -82,6 +82,13 @@ class BirdRun(object):
         d = dict(**kwargs)
         return os.path.join(obs_path, "OBS_all_len_{max_distance}_{date_range}_{num_squares}.csv".format(**d))
 
+    def get_terrain_occurrences_fn(self, obs_path, **kwargs):
+        """Completes the name of an observation ratio file, adding the information on minimum number of observations,
+        and maximum length walked.
+        """
+        d = dict(**kwargs)
+        return os.path.join(obs_path, "TEROBS_all_len_{max_distance}_{date_range}_{num_squares}.csv".format(**d))
+
     def get_observations_all_display_fn(self, obs_path, **kwargs):
         """Completes the name of an observation ratio tif file, adding the information on minimum number of observations,
         and maximum length walked.
