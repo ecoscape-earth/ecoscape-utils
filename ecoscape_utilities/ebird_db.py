@@ -493,7 +493,7 @@ class Validation(object):
         If the cached version is not found, it is created.
         The cached version contains pre-translated coordinates to pixel values.
         :param obs_fn: Observations filename.
-        :param geotiff_fn: name of a geotiff (habitat is preferred) used
+        :param geotiff_fn: name of a geotiff (repopulation is preferred) used
             for translating coordinates to pixel coordinates.
         """
         self.obs_fn = obs_fn
@@ -594,6 +594,8 @@ class Validation(object):
         :param weighted_tile_size: size of the tile to attribute grouped weights to
         :returns: a dataframe with columns repopulation, observation ratio, and weights
         '''
+        assert repop_tif.crs == hab.crs, "Repopulation and habitat geotiffs must have the same CRS"
+        assert repop_tif.size == hab.size, "Repopulation and habitat geotiffs must have the same size"
         df = pd.DataFrame(columns=['repop', 'hab', 'max_repop', 'max_hab', 'obs_ratio', 'lat', 'lng', 'x', 'y', ])
         count = defaultdict(int)
         for (square, ratio) in observation_ratios:
