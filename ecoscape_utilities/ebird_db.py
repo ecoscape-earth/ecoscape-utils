@@ -607,13 +607,14 @@ class Validation(object):
         :param hab_tif: habitat geotiff used to compute repop
         :param tile_scale: size of the tile around square
         """
-        df = self.observations.copy()
+        df = pd.read_csv(self.obs_fn)
         def f(row):
             square = row["Square"]
             if (isinstance(square, str)):
                 coords = format_coords(square)
             else:
                 coords = square
+            lat, lng = coords
             repop_pix_coords = transform_coords(repop_tif, coords)
             hab_pix_coords = transform_coords(hab_tif, coords)
             repop_tile = repop_tif.get_tile_from_coord(repop_pix_coords, tile_scale=tile_scale)
@@ -627,7 +628,7 @@ class Validation(object):
             if div_by_255:
                 avg_repop /= 255.
                 max_repop /= 255.
-            return avg_repop, avg_hab, max_repop, max_hab
-        df["avg_repop"], df["avg_hab"], df["max_repop"], df["max_hab"] = zip(*df.apply(f, axis=1))
+            return avg_repop, avg_hab, max_repop, max_hab, lat, lng
+        df["avg_repop"], df["avg_hab"], df["max_repop"], df["max_hab"], df["lat"], df["lng"] = zip(*df.apply(f, axis=1))
         return df
 
