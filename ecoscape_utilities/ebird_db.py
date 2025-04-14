@@ -486,42 +486,12 @@ A module for common functionality in the validaiton process using ebird data
 """
 class Validation(object):
 
-    def __init__(self, obs_fn, geotiff_fn):
+    def __init__(self, obs_fn):
         """
         Generates a class for validation.
-        It first tries to read the cached version of obs_fn for the specified geotiff_fn.
-        If the cached version is not found, it is created.
-        The cached version contains pre-translated coordinates to pixel values.
         :param obs_fn: Observations filename.
-        :param geotiff_fn: name of a geotiff (repopulation is preferred) used
-            for translating coordinates to pixel coordinates.
         """
         self.obs_fn = obs_fn
-        self.geotiff_fn = geotiff_fn
-        h = hashlib.sha1(obs_fn.encode('utf-8'))
-        h.update(geotiff_fn.encode('utf-8'))
-        cached_fn = obs_fn + "." + h.hexdigest() + ".csv"
-        if not os.path.exists(cached_fn):
-            self._create_cached_observations(cached_fn)
-        self.observations = pd.read_csv(cached_fn)
-
-
-    def _create_cached_observations(self, cached_fn):
-        """Creates a cached version of the observations that also contains
-        pixel coordinates."""
-        geotiff = GeoTiff.from_file(self.geotiff_fn)
-        def f(row):
-            square = row["Square"]
-            if (isinstance(square, str)):
-                coords = format_coords(square)
-            else:
-                coords = square
-            lat, lng = coords
-            pix_x, pix_y = transform_coords(geotiff, coords)
-            return lat, lng, pix_x, pix_y
-        df = pd.read_csv(self.obs_fn)
-        df["lat"], df["lng"], df["pix_x"], df["pix_y"] = zip(*df.apply(f, axis=1))
-        df.to_csv(cached_fn)
 
 
     def filter_CA_rectangle(self, observation_ratios, bigsquare=False):
@@ -594,8 +564,6 @@ class Validation(object):
         :param weighted_tile_size: size of the tile to attribute grouped weights to
         :returns: a dataframe with columns repopulation, observation ratio, and weights
         '''
-        assert repop_tif.crs == hab.crs, "Repopulation and habitat geotiffs must have the same CRS"
-        assert repop_tif.size == hab.size, "Repopulation and habitat geotiffs must have the same size"
         df = pd.DataFrame(columns=['repop', 'hab', 'max_repop', 'max_hab', 'obs_ratio', 'lat', 'lng', 'x', 'y', ])
         count = defaultdict(int)
         for (square, ratio) in observation_ratios:
@@ -604,9 +572,10 @@ class Validation(object):
             else:
                 coords = square
             lat, lng = coords
-            coords = transform_coords(repop_tif, coords)
-            repop_tile = repop_tif.get_tile_from_coord(coords, tile_scale=tile_scale)
-            hab_tile = hab.get_tile_from_coord(hab, coords, tile_scale=tile_scale)
+            repop_pix_coords = transform_coords(repop_tif, coords)
+            hab_pix_coords = transform_coords(hab, coords)
+            repop_tile = repop_tif.get_tile_from_coord(repop_pix_coords, tile_scale=tile_scale)
+            hab_tile = hab.get_tile_from_coord(hab_pix_coords, tile_scale=tile_scale)
             if repop_tile is None or hab_tile is None:
                 continue
             x, y = repop_tif.get_pixel_from_coord(coords)
@@ -640,9 +609,15 @@ class Validation(object):
         """
         df = self.observations.copy()
         def f(row):
-            coords = (row["pix_x"], row["pix_y"])
-            repop_tile = repop_tif.get_tile_from_coord(coords, tile_scale=tile_scale)
-            hab_tile = hab_tif.get_tile_from_coord(coords, tile_scale=tile_scale)
+            square = row["Square"]
+            if (isinstance(square, str)):
+                coords = format_coords(square)
+            else:
+                coords = square
+            repop_pix_coords = transform_coords(repop_tif, coords)
+            hab_pix_coords = transform_coords(hab_tif, coords)
+            repop_tile = repop_tif.get_tile_from_coord(repop_pix_coords, tile_scale=tile_scale)
+            hab_tile = hab_tif.get_tile_from_coord(hab_pix_coords, tile_scale=tile_scale)
             if repop_tile is None or hab_tile is None:
                 return pd.NA, pd.NA, pd.NA, pd.NA
             avg_repop = np.average(repop_tile.m)
