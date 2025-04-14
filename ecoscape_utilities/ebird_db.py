@@ -620,7 +620,7 @@ class Validation(object):
             repop_tile = repop_tif.get_tile_from_coord(repop_pix_coords, tile_scale=tile_scale)
             hab_tile = hab_tif.get_tile_from_coord(hab_pix_coords, tile_scale=tile_scale)
             if repop_tile is None or hab_tile is None:
-                return pd.NA, pd.NA, pd.NA, pd.NA
+                return pd.NA, pd.NA, pd.NA, pd.NA, lat, lng
             avg_repop = np.average(repop_tile.m)
             avg_hab = np.average(hab_tile.m)
             max_repop = np.max(repop_tile.m)
