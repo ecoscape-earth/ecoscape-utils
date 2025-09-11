@@ -11,6 +11,34 @@ from pyproj.crs import CRS
 
 from scgt import GeoTiff
 
+def expand_sqlite_query(query, params):
+    """
+    Expands an SQLite query string with named parameters from a dictionary.
+
+    Args:
+        query (str): The SQL query string with :variable placeholders.
+        params (dict): A dictionary mapping variable names to their values.
+
+    Returns:
+        str: The expanded SQL query string.
+    """
+    expanded_query = query
+    for key, value in params.items():
+        placeholder = f":{key}"
+        if isinstance(value, str):
+            # Escape any single quotes within the string
+            formatted_value = f"'{value.replace("'", "''")}'"
+        elif value is None:
+            formatted_value = 'NULL'
+        else:
+            # For integers, floats, and other types
+            formatted_value = str(value)
+        
+        expanded_query = expanded_query.replace(placeholder, formatted_value)
+        
+    return expanded_query
+    
+    
 """
 A module for interaction with a sqlite database. Contains functions for query execution, 
 and some common functionality we need to run on the DB
@@ -72,35 +100,39 @@ class EbirdObservations(Connection):
         super().__init__(db_file)
 
     def get_all_squares(self, state=None,
-                        breeding=True, date_range=None,
-                        lat_range=None, lng_range=None, max_dist=2,
+                        breeding=None, date_range=None,
+                        lat_range=None, lng_range=None, max_dist=2, min_time=None,
                         verbose=False):
         """
         Gets all squares with bird (any bird) observations, for a certain state,
         and withing certain lat, lng, and date ranges.
         :param state (str): state code
-        :param breeding (boolean): whether to filter observations by breeding months (getting only apr-june)
+        :param breeding: None, or pair of months delimiting the breeding season, e.g. ("04", "06").
         :param date_range: tuple of 2 date-strings in format "YYYY-MM-DD" to get only observations in this date range
         :param lat_range: tuple of 2 floats for the lower and upper bounds for latitude
         :param lng_range: tuple of 2 floats for the lower and upper bounds for longitude
         :param max_dist (int): max kilometers traveled for the checklist for any observation we consider
             (any of further distance will be too noisy, and should be disreguarded)
+        :param min_time (int): minimum time in minutes for the checklist for any observation we consider
         :returns: list of squares which fall within the query parameters
         """
         query_string=['select DISTINCT SQUARE from checklist where "ALL SPECIES REPORTED" = 1']
         query_string.append('and "PROTOCOL TYPE" != "Incidental"')
         query_string.append('and "EFFORT DISTANCE KM" <= :dist')
         d = {"dist": max_dist}
+        if min_time is not None:
+            query_string.append('and "DURATION MINUTES" >= :min_time')
+            d["min_time"] = min_time
         if state is not None:
             query_string.append('and "STATE CODE" = :state')
             d['state'] = state
         # Adds breeding portion
-        if breeding:
+        if breeding is not None:
             query_string.extend([
-                'and (substr("OBSERVATION DATE", 6, 2) = "04"',
-                'OR substr("OBSERVATION DATE", 6, 2) = "05"',
-                'OR substr("OBSERVATION DATE", 6, 2) = "06")'
+                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
+                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
                 ])
+            d['br1'], d['br2'] = breeding
         if date_range is not None:
             query_string.append('and "OBSERVATION DATE" >= :min_date')
             query_string.append('and "OBSERVATION DATE" <= :max_date')
@@ -116,24 +148,26 @@ class EbirdObservations(Connection):
         query_string = " ".join(query_string)
         if verbose:
             print("Query:", query_string)
+            print("Expanded query:", expand_sqlite_query(query_string, d))
         squares_list = self.execute_query((query_string, d))
         return [sq[0] for sq in squares_list]
 
     def get_square_observations(self, square, bird,
-                          breeding=True, date_range=None,
-                          lat_range=None, lng_range=None, max_dist=2,
+                          breeding=None, date_range=None,
+                          lat_range=None, lng_range=None, max_dist=2, min_time=None,
                           verbose=False):
         """
         Get the number of checklists, number of checklists with a bird,
         total time, total distance, and total bird sightings, for a square.
         :param square: tuple of 2 floats, representing (lat, lng) of the square
         :param bird: bird
-        :param breeding (boolean): whether to filter observations by breeding months (getting only apr-june)
+        :param breeding: pair of months delimiting breeding season, or None (e.g., ("04", "06")). 
         :param date_range: tuple of 2 date-strings in format "YYYY-MM-DD" to get only observations in this date range
         :param lat_range: tuple of 2 floats for the lower and upper bounds for latitude
         :param lng_range: tuple of 2 floats for the lower and upper bounds for longitude
         :param max_dist (int): max kilometers traveled for the checklist for any observation we consider
             (any of further distance will be too noisy, and should be disreguarded)
+        :param min_time (int): minimum time in minutes for the checklist for any observation we consider
         :returns: num_checklists, num_bird_checklists, num_birds for the given square.
         """
         # Gets the number of checklists, the total time, the total distance, and the total number of birds.
@@ -144,13 +178,16 @@ class EbirdObservations(Connection):
         query_string.append('and "PROTOCOL TYPE" != "Incidental"')
         query_string.append('and "EFFORT DISTANCE KM" <= :dist')
         d["dist"] = max_dist
+        if min_time is not None:
+            query_string.append('and "DURATION MINUTES" >= :min_time')
+            d["min_time"] = min_time
         # Adds breeding portion
-        if breeding:
+        if breeding is not None:
             query_string.extend([
-                'and (substr("OBSERVATION DATE", 6, 2) = "04"',
-                'OR substr("OBSERVATION DATE", 6, 2) = "05"',
-                'OR substr("OBSERVATION DATE", 6, 2) = "06")'
+                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
+                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
                 ])
+            d['br1'], d['br2'] = breeding
         if date_range is not None:
             query_string.append('and "OBSERVATION DATE" >= :min_date')
             query_string.append('and "OBSERVATION DATE" <= :max_date')
@@ -187,12 +224,12 @@ class EbirdObservations(Connection):
         query_string.append('and checklist."EFFORT DISTANCE KM" <= :dist')
         d["dist"] = max_dist
         # Adds breeding portion
-        if breeding:
+        if breeding is not None:
             query_string.extend([
-                'and (substr(checklist."OBSERVATION DATE", 6, 2) = "04"',
-                'OR substr(checklist."OBSERVATION DATE", 6, 2) = "05"',
-                'OR substr(checklist."OBSERVATION DATE", 6, 2) = "06")'
+                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
+                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
                 ])
+            d['br1'], d['br2'] = breeding
         if date_range is not None:
             query_string.append('and checklist."OBSERVATION DATE" >= :min_date')
             query_string.append('and checklist."OBSERVATION DATE" <= :max_date')
@@ -212,6 +249,7 @@ class EbirdObservations(Connection):
         query_string = " ".join(query_string)
         if verbose:
             print("Query:", query_string)
+            print("Expanded query:", expand_sqlite_query(query_string, d))
         r = self.execute_query((query_string, d))
         if r is None:
             num_birds = 0
@@ -229,7 +267,7 @@ class EbirdObservations(Connection):
         )
 
     def get_square_individual_checklists(self, square, bird,
-                          breeding=True, date_range=None,
+                          breeding=None, date_range=None,
                           lat_range=None, lng_range=None, max_dist=2,
                           verbose=False):
         """
@@ -239,7 +277,7 @@ class EbirdObservations(Connection):
         and total bird sightings, for a square.
         :param square: tuple of 2 floats, representing (lat, lng) of the square
         :param bird (str): name of bird
-        :param breeding (boolean): whether to filter observations by breeding months (getting only apr-june)
+        :param breeding: None, or pair of months delimiting breeding season ("04", "06"). 
         :param date_range: tuple of 2 date-strings in format "YYYY-MM-DD" to get only observations in this date range
         :param lat_range: tuple of 2 floats for the lower and upper bounds for latitude
         :param lng_range: tuple of 2 floats for the lower and upper bounds for longitude
@@ -256,12 +294,12 @@ class EbirdObservations(Connection):
         query_string.append('and "EFFORT DISTANCE KM" <= :dist')
         d["dist"] = max_dist
         # Adds breeding portion
-        if breeding:
+        if breeding is not None:
             query_string.extend([
-                'and (substr("OBSERVATION DATE", 6, 2) = "04"',
-                'OR substr("OBSERVATION DATE", 6, 2) = "05"',
-                'OR substr("OBSERVATION DATE", 6, 2) = "06")'
+                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
+                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
                 ])
+            d['br1'], d['br2'] = breeding
         if date_range is not None:
             query_string.append('and "OBSERVATION DATE" >= :min_date')
             query_string.append('and "OBSERVATION DATE" <= :max_date')
@@ -291,12 +329,12 @@ class EbirdObservations(Connection):
         query_string.append('and checklist."EFFORT DISTANCE KM" <= :dist')
         d["dist"] = max_dist
         # Adds breeding portion
-        if breeding:
+        if breeding is not None:
             query_string.extend([
-                'and (substr(checklist."OBSERVATION DATE", 6, 2) = "04"',
-                'OR substr(checklist."OBSERVATION DATE", 6, 2) = "05"',
-                'OR substr(checklist."OBSERVATION DATE", 6, 2) = "06")'
+                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
+                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
                 ])
+            d['br1'], d['br2'] = breeding
         if date_range is not None:
             query_string.append('and checklist."OBSERVATION DATE" >= :min_date')
             query_string.append('and checklist."OBSERVATION DATE" <= :max_date')
@@ -316,6 +354,7 @@ class EbirdObservations(Connection):
         query_string = " ".join(query_string)
         if verbose:
             print("Query:", query_string)
+            print("Expanded query:", expand_sqlite_query(query_string, d))
         rows = self.execute_query((query_string, d))
         counts = defaultdict(int)
         for r in rows:
@@ -323,14 +362,14 @@ class EbirdObservations(Connection):
         checklists_df["Count"] = checklists_df.apply(lambda row : counts[row["SAMPLING EVENT IDENTIFIER"]], axis=1)
         return checklists_df
 
-    def get_squares_with_bird(self, bird, max_dist=1, breeding=False,
+    def get_squares_with_bird(self, bird, max_dist=1, breeding=None,
                               date_range=None, lat_range=None, lng_range=None,
                               state=None, verbose=False):
         """Gets all the squares where a bird has been sighted.  This is used
         primarily to refine the terrain resistance.
         :param bird: Common name of the bird
         :param max_dist: max length of the checklist in Km
-        :param breeding: whether to consider only the breeding period or not
+        :param breeding: pair of months delimiting breeding season, or None. 
         :param date_range: date range in years, as a string tuple of yyyy-mm-dd dates
         :param lat_range: range of latitudes to consider, as number tuple, optional.
         :param lng_range: range of longitudes to consider, as number tuple, optional.
@@ -350,12 +389,12 @@ class EbirdObservations(Connection):
         query_string.append('and checklist."PROTOCOL TYPE" != "Incidental"')
         query_string.append('and checklist."EFFORT DISTANCE KM" <= :dist')
          # Adds breeding portion
-        if breeding:
+        if breeding is not None:
             query_string.extend([
-                'and (substr(checklist."OBSERVATION DATE", 6, 2) = "04"',
-                'OR substr(checklist."OBSERVATION DATE", 6, 2) = "05"',
-                'OR substr(checklist."OBSERVATION DATE", 6, 2) = "06")'
+                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
+                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
                 ])
+            d['br1'], d['br2'] = breeding
         if date_range is not None:
             query_string.append('and checklist."OBSERVATION DATE" >= :min_date')
             query_string.append('and checklist."OBSERVATION DATE" <= :max_date')
@@ -372,80 +411,9 @@ class EbirdObservations(Connection):
         query_string = " ".join(query_string)
         if verbose:
             print("Query:", query_string)
+            print("Expanded query:", expand_sqlite_query(query_string, d))
         r = self.execute_query((query_string, d))
         return [row[0] for row in r]
-
-
-    def get_observation_ratios(self, bird, min_checklists, bigsquare=False,
-                               max_dist=1, verbose=False,
-                               state=None, breeding=True):
-        """This function is not used now.  It was the old, deprecated way of
-        doing validation, and we are keeping the code for reference only."""
-        # First, I create a dictionary of squares to checklist counts.
-        query_string = [
-            'select "SAMPLING EVENT IDENTIFIER",',
-            'BIGSQUARE' if bigsquare else 'SQUARE',
-            'from checklist where',
-            '"ALL SPECIES REPORTED" = 1',
-        ]
-        d = {'dist': max_dist}
-        query_string.append('and "PROTOCOL TYPE" != "Incidental"')
-        query_string.append('and "EFFORT DISTANCE KM" <= :dist')
-        if state is not None:
-            query_string.append('and "STATE CODE" = :state')
-            d['state'] = state
-        # Adds breeding portion
-        if breeding:
-            query_string.extend([
-                'and (substr("OBSERVATION DATE", 6, 2) = "04"',
-                'OR substr("OBSERVATION DATE", 6, 2) = "05"',
-                'OR substr("OBSERVATION DATE", 6, 2) = "06")'
-                ])
-        query_string = " ".join(query_string)
-        if verbose:
-            print("Query:", query_string)
-        observations = self.execute_query((query_string, d))
-        checklists_per_square = defaultdict(int)
-        for _, sq in observations:
-            checklists_per_square[sq] += 1
-        # Now I keep only the squares with a minimum of checklists.
-        checklists_per_square = {sq: c for sq, c in checklists_per_square.items() if c >= min_checklists}
-        # Ok, I care only about these squares.
-        # Now I want to know, for each of these squares, how many checklists there are that
-        # contain the bird.
-        query_string = [
-            'select DISTINCT checklist."SAMPLING EVENT IDENTIFIER",',
-            'checklist.BIGSQUARE' if bigsquare else 'checklist.SQUARE',
-            'from checklist join observation on',
-            'checklist."SAMPLING EVENT IDENTIFIER" = observation."SAMPLING EVENT IDENTIFIER"',
-            'where observation."COMMON NAME" = :bird',
-            'and checklist."ALL SPECIES REPORTED" = 1',
-        ]
-        d = {'dist': max_dist ,'bird': bird}
-        query_string.append('and checklist."PROTOCOL TYPE" != "Incidental"')
-        query_string.append('and checklist."EFFORT DISTANCE KM" <= :dist')
-        if state is not None:
-            query_string.append('and checklist."STATE CODE" = :state')
-            d['state'] = state
-        if breeding:
-            query_string.extend([
-                'and (substr(checklist."OBSERVATION DATE", 6, 2) = "04"',
-                'OR substr(checklist."OBSERVATION DATE", 6, 2) = "05"',
-                'OR substr(checklist."OBSERVATION DATE", 6, 2) = "06")',
-                ])
-        query_string = " ".join(query_string)
-        if verbose:
-            print("Query:", query_string)
-        observations = self.execute_query((query_string, d))
-        good_checklists_per_square = defaultdict(int)
-        for _, sq in observations:
-            if sq in checklists_per_square: # Otherwise, too few observations.
-                good_checklists_per_square[sq] += 1
-        for sq in checklists_per_square:
-            if good_checklists_per_square[sq] > checklists_per_square[sq]:
-                print("Too many checklists at", sq, good_checklists_per_square[sq], checklists_per_square[sq])
-        return {sq: (good_checklists_per_square[sq] / checklists_per_square[sq])
-                for sq in checklists_per_square}
 
 
 def format_coords(coords, bigsquare=False):
