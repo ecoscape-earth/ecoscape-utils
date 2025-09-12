@@ -6,3 +6,11 @@
 
 - Now the breeding season is represented via a pair like ("04", "06") indicating the first and last month of breeding season.  This also means the default is uniformly None. 
 
+0.0.39: 
+
+- Fixed bugs in min_time parameter.
+
+0.0.40: 
+
+- Fixed bug in DB query quoting. 
+

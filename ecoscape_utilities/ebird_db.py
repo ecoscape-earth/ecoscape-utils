@@ -129,8 +129,8 @@ class EbirdObservations(Connection):
         # Adds breeding portion
         if breeding is not None:
             query_string.extend([
-                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
-                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
+                'and substr("OBSERVATION DATE", 6, 2) >= :br1',
+                'and substr("OBSERVATION DATE", 6, 2) <= :br2',
                 ])
             d['br1'], d['br2'] = breeding
         if date_range is not None:
@@ -184,8 +184,8 @@ class EbirdObservations(Connection):
         # Adds breeding portion
         if breeding is not None:
             query_string.extend([
-                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
-                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
+                'and substr("OBSERVATION DATE", 6, 2) >= :br1',
+                'and substr("OBSERVATION DATE", 6, 2) <= :br2',
                 ])
             d['br1'], d['br2'] = breeding
         if date_range is not None:
@@ -226,10 +226,13 @@ class EbirdObservations(Connection):
         # Adds breeding portion
         if breeding is not None:
             query_string.extend([
-                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
-                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
+                'and substr(checklist."OBSERVATION DATE", 6, 2) >= :br1',
+                'and substr(checklist."OBSERVATION DATE", 6, 2) <= :br2',
                 ])
             d['br1'], d['br2'] = breeding
+        if min_time is not None:
+            query_string.append('and "checklist.DURATION MINUTES" >= :min_time')
+            d["min_time"] = min_time
         if date_range is not None:
             query_string.append('and checklist."OBSERVATION DATE" >= :min_date')
             query_string.append('and checklist."OBSERVATION DATE" <= :max_date')
@@ -267,7 +270,7 @@ class EbirdObservations(Connection):
         )
 
     def get_square_individual_checklists(self, square, bird,
-                          breeding=None, date_range=None,
+                          breeding=None, date_range=None, min_time=None,
                           lat_range=None, lng_range=None, max_dist=2,
                           verbose=False):
         """
@@ -296,10 +299,13 @@ class EbirdObservations(Connection):
         # Adds breeding portion
         if breeding is not None:
             query_string.extend([
-                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
-                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
+                'and substr("OBSERVATION DATE", 6, 2) >= :br1',
+                'and substr("OBSERVATION DATE", 6, 2) <= :br2',
                 ])
             d['br1'], d['br2'] = breeding
+        if min_time is not None:
+            query_string.append('and "DURATION MINUTES" >= :min_time')
+            d["min_time"] = min_time
         if date_range is not None:
             query_string.append('and "OBSERVATION DATE" >= :min_date')
             query_string.append('and "OBSERVATION DATE" <= :max_date')
@@ -331,14 +337,17 @@ class EbirdObservations(Connection):
         # Adds breeding portion
         if breeding is not None:
             query_string.extend([
-                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
-                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
+                'and substr(checklist."OBSERVATION DATE", 6, 2) >= :br1',
+                'and substr(checklist."OBSERVATION DATE", 6, 2) <= :br2',
                 ])
             d['br1'], d['br2'] = breeding
         if date_range is not None:
             query_string.append('and checklist."OBSERVATION DATE" >= :min_date')
             query_string.append('and checklist."OBSERVATION DATE" <= :max_date')
             d["min_date"], d["max_date"] = date_range
+        if min_time is not None:
+            query_string.append('and checklist."DURATION MINUTES" >= :min_time')
+            d["min_time"] = min_time
         if lat_range is not None:
             query_string.append('and checklist."LATITUDE" >= :min_lat')
             query_string.append('and checklist."LATITUDE" <= :max_lat')
@@ -362,7 +371,7 @@ class EbirdObservations(Connection):
         checklists_df["Count"] = checklists_df.apply(lambda row : counts[row["SAMPLING EVENT IDENTIFIER"]], axis=1)
         return checklists_df
 
-    def get_squares_with_bird(self, bird, max_dist=1, breeding=None,
+    def get_squares_with_bird(self, bird, max_dist=1, breeding=None, min_time=None,
                               date_range=None, lat_range=None, lng_range=None,
                               state=None, verbose=False):
         """Gets all the squares where a bird has been sighted.  This is used
@@ -391,10 +400,13 @@ class EbirdObservations(Connection):
          # Adds breeding portion
         if breeding is not None:
             query_string.extend([
-                'and substr("OBSERVATION DATE", 6, 2) >= ":br1"',
-                'and substr("OBSERVATION DATE", 6, 2) <= ":br2"',
+                'and substr("OBSERVATION DATE", 6, 2) >= :br1',
+                'and substr("OBSERVATION DATE", 6, 2) <= :br2',
                 ])
             d['br1'], d['br2'] = breeding
+        if min_time is not None:
+            query_string.append('and "DURATION MINUTES" >= :min_time')
+            d["min_time"] = min_time
         if date_range is not None:
             query_string.append('and checklist."OBSERVATION DATE" >= :min_date')
             query_string.append('and checklist."OBSERVATION DATE" <= :max_date')
