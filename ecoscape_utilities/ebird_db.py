@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import sqlite3
 from sqlite3 import Error
+import warnings
 
 from collections import defaultdict
 from pyproj import Transformer
@@ -170,6 +171,8 @@ class EbirdObservations(Connection):
         :param min_time (int): minimum time in minutes for the checklist for any observation we consider
         :returns: num_checklists, num_bird_checklists, num_birds for the given square.
         """
+        # Adds deprecation warning. 
+        warnings.warn("This function is deprecated.  Use get_square_checklists instead.", DeprecationWarning)
         # Gets the number of checklists, the total time, the total distance, and the total number of birds.
         query_string=['select COUNT(*), SUM("EFFORT DISTANCE KM"), SUM("DURATION MINUTES")', 
                       'FROM checklist where SQUARE = :square']
@@ -268,6 +271,119 @@ class EbirdObservations(Connection):
             total_km=total_km,
             total_minutes=total_minutes,
         )
+        
+    def get_state_checklists(self, state, bird,
+                          breeding=None, date_range=None, 
+                          lat_range=None, lng_range=None, max_dist=2,
+                          verbose=False):
+        """Returns a dataframe consisting of all checklists in a square, with data 
+        on a (possible) occurrence of a bird."""
+        query_string = [
+            'SELECT checklist."SQUARE", ',
+            'checklist."SAMPLING EVENT IDENTIFIER", ',
+            'checklist."PROTOCOL TYPE", ',
+            'checklist."EFFORT DISTANCE KM", ',
+            'checklist."DURATION MINUTES", ',
+            'checklist."OBSERVATION DATE", ',
+            'checklist."TIME OBSERVATIONS STARTED", ',
+            'checklist."OBSERVER ID", ',
+            'checklist."LATITUDE", ',
+            'checklist."LONGITUDE", ',
+            'observation."OBSERVATION COUNT" ',
+            'FROM checklist LEFT JOIN observation ',
+            'ON checklist."SAMPLING EVENT IDENTIFIER" = observation."SAMPLING EVENT IDENTIFIER" ',
+            'AND observation."COMMON NAME" = :bird ',
+            'WHERE ',
+            'checklist."STATE CODE" = :state',
+            'and checklist."ALL SPECIES REPORTED" = 1',
+            'and checklist."PROTOCOL TYPE" != "Incidental" ',
+            'and checklist."EFFORT DISTANCE KM" <= :dist',
+        ]
+        # Main query parameters
+        d = {"state": state, "dist": max_dist, "bird": bird.name}
+        # Adds breeding portion
+        if breeding is not None:
+            query_string.extend([
+                'and substr(checklist."OBSERVATION DATE", 6, 2) >= :br1',
+                'and substr(checklist."OBSERVATION DATE", 6, 2) <= :br2',
+                ])
+            d['br1'], d['br2'] = breeding
+        if date_range is not None:
+            query_string.append('and checklist."OBSERVATION DATE" >= :min_date')
+            query_string.append('and checklist."OBSERVATION DATE" <= :max_date')
+            d["min_date"], d["max_date"] = date_range
+        if lat_range is not None:
+            query_string.append('and checklist."LATITUDE" >= :min_lat')
+            query_string.append('and checklist."LATITUDE" <= :max_lat')
+            d["min_lat"], d["max_lat"] = lat_range
+        if lng_range is not None:
+            query_string.append('and checklist."LONGITUDE" >= :min_lng')
+            query_string.append('and checklist."LONGITUDE" <= :max_lng')
+            d["min_lng"], d["max_lng"] = lng_range
+        # Submits the query. 
+        query_string = " ".join(query_string)
+        if verbose:
+            print("Query:", query_string)
+            print("Expanded query:", expand_sqlite_query(query_string, d))
+        checklists_df = pd.read_sql_query(query_string, self.conn, params=d)
+        return checklists_df
+        
+
+    def get_square_checklists(self, square, bird,
+                          breeding=None, date_range=None,
+                          lat_range=None, lng_range=None, max_dist=2,
+                          verbose=False):
+        """Returns a dataframe consisting of all checklists in a square, with data 
+        on a (possible) occurrence of a bird."""
+        query_string = [
+            'SELECT checklist."SQUARE", ',
+            'checklist."SAMPLING EVENT IDENTIFIER", ',
+            'checklist."PROTOCOL TYPE", ',
+            'checklist."EFFORT DISTANCE KM", ',
+            'checklist."DURATION MINUTES", ',
+            'checklist."OBSERVATION DATE", ',
+            'checklist."TIME OBSERVATIONS STARTED", ',
+            'checklist."OBSERVER ID", ',
+            'checklist."LATITUDE", ',
+            'checklist."LONGITUDE", ',
+            'observation."OBSERVATION COUNT" ',
+            'FROM checklist LEFT JOIN observation ',
+            'ON checklist."SAMPLING EVENT IDENTIFIER" = observation."SAMPLING EVENT IDENTIFIER" ',
+            'AND observation."COMMON NAME" = :bird ',
+            'WHERE ',
+            'checklist.SQUARE = :square',
+            'and checklist."ALL SPECIES REPORTED" = 1',
+            'and checklist."PROTOCOL TYPE" != "Incidental" ',
+            'and checklist."EFFORT DISTANCE KM" <= :dist',
+        ]
+        # Main query parameters
+        d = {"square": square, "dist": max_dist, "bird": bird.name}
+        # Adds breeding portion
+        if breeding is not None:
+            query_string.extend([
+                'and substr(checklist."OBSERVATION DATE", 6, 2) >= :br1',
+                'and substr(checklist."OBSERVATION DATE", 6, 2) <= :br2',
+                ])
+            d['br1'], d['br2'] = breeding
+        if date_range is not None:
+            query_string.append('and checklist."OBSERVATION DATE" >= :min_date')
+            query_string.append('and checklist."OBSERVATION DATE" <= :max_date')
+            d["min_date"], d["max_date"] = date_range
+        if lat_range is not None:
+            query_string.append('and checklist."LATITUDE" >= :min_lat')
+            query_string.append('and checklist."LATITUDE" <= :max_lat')
+            d["min_lat"], d["max_lat"] = lat_range
+        if lng_range is not None:
+            query_string.append('and checklist."LONGITUDE" >= :min_lng')
+            query_string.append('and checklist."LONGITUDE" <= :max_lng')
+            d["min_lng"], d["max_lng"] = lng_range
+        # Submits the query. 
+        query_string = " ".join(query_string)
+        if verbose:
+            print("Query:", query_string)
+            print("Expanded query:", expand_sqlite_query(query_string, d))
+        checklists_df = pd.read_sql_query(query_string, self.conn, params=d)
+        return checklists_df
 
     def get_square_individual_checklists(self, square, bird,
                           breeding=None, date_range=None, min_time=None,
@@ -288,6 +404,8 @@ class EbirdObservations(Connection):
             (any of further distance will be too noisy, and should be disreguarded)
         :returns: list of squares which fall within the query parameters
         """
+        # Adds deprecation warning. 
+        warnings.warn("This function is deprecated.  Use get_square_checklists instead.", DeprecationWarning)
         # First the checklists, with or without the bird.
         query_string=['select DISTINCT("SAMPLING EVENT IDENTIFIER")',
                       'FROM checklist where SQUARE = :square']
@@ -296,6 +414,9 @@ class EbirdObservations(Connection):
         query_string.append('and "PROTOCOL TYPE" != "Incidental"')
         query_string.append('and "EFFORT DISTANCE KM" <= :dist')
         d["dist"] = max_dist
+        if min_time is not None:
+            query_string.append('and "DURATION MINUTES" >= :min_time')
+            d["min_time"] = min_time
         # Adds breeding portion
         if breeding is not None:
             query_string.extend([
@@ -303,9 +424,6 @@ class EbirdObservations(Connection):
                 'and substr("OBSERVATION DATE", 6, 2) <= :br2',
                 ])
             d['br1'], d['br2'] = breeding
-        if min_time is not None:
-            query_string.append('and "DURATION MINUTES" >= :min_time')
-            d["min_time"] = min_time
         if date_range is not None:
             query_string.append('and "OBSERVATION DATE" >= :min_date')
             query_string.append('and "OBSERVATION DATE" <= :max_date')

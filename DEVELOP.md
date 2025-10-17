@@ -11,3 +11,7 @@ To upload:
 To install locally: 
 
     python3 -m pip install . 
+
+or: 
+
+    python3 -m pip install --force-reinstall --no-deps .
