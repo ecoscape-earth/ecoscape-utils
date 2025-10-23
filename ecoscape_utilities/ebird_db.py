@@ -296,7 +296,7 @@ class EbirdObservations(Connection):
             'WHERE ',
             'checklist."STATE CODE" = :state',
             'and checklist."ALL SPECIES REPORTED" = 1',
-            'and checklist."PROTOCOL TYPE" != "Incidental" ',
+            'and checklist."PROTOCOL TYPE" IN ("Traveling", "Stationary") ',
             'and checklist."EFFORT DISTANCE KM" <= :dist',
         ]
         # Main query parameters

@@ -14,3 +14,7 @@
 
 - Fixed bug in DB query quoting. 
 
+0.0.42: 
+
+- Added `get_state_checklists` function to get all checklists in a state.
+- Deprecated old ways of reading checklists by state or square.
